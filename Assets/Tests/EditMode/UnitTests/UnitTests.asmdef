@@ -5,11 +5,13 @@
     ],
     "references": [
         "GameAssembly",
+        "TacticalAssembly",
         "Unity.Rebellion.Build.CodeGen",
         "NativeAudit",
         "ContentPackEditorAssembly",
         "Unity.InputSystem",
         "Unity.InputSystem.TestFramework",
+        "Unity.Mathematics",
         "Unity.TextMeshPro",
         "Unity.RenderPipelines.Core.Runtime",
         "Unity.RenderPipelines.HighDefinition.Runtime",
