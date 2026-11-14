@@ -1,11 +1,9 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Rebellion.Tactical.Data;
 using Rebellion.Tactical.Simulation;
 using Rebellion.Tactical.AI;
 using Rebellion.Tactical.UI;
-using Rebellion.Tactical.Integration;
 
 namespace Rebellion.Tactical.Presentation
 {
@@ -33,7 +31,6 @@ namespace Rebellion.Tactical.Presentation
         private TacticalWeaponSystem _weaponSystem;
         private TacticalTargetingSystem _targetingSystem;
         private TacticalAIController _aiController;
-        private TacticalBattleBridge _bridge;
 
         private List<TacticalProjectile> _projectiles = new List<TacticalProjectile>();
 
@@ -61,7 +58,6 @@ namespace Rebellion.Tactical.Presentation
             _repairSystem = new TacticalRepairSystem();
             _weaponSystem = new TacticalWeaponSystem(_targetingSystem, _damageSystem);
             _aiController = new TacticalAIController(_targetingSystem, _weaponSystem);
-            _bridge = new TacticalBattleBridge();
 
             _state = TacticalBattleStateEnum.Running;
         }

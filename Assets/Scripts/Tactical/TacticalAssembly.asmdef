@@ -2,7 +2,6 @@
     "name": "TacticalAssembly",
     "rootNamespace": "Rebellion.Tactical",
     "references": [
-        "GameAssembly",
         "Unity.Mathematics",
         "Unity.InputSystem"
     ],

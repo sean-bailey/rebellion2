@@ -1,12 +1,9 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using Rebellion.Game;
-using Rebellion.Game.Units;
 using Rebellion.Tactical.Data;
 using Rebellion.Tactical.Simulation;
 
-namespace Rebellion.Tactical.Integration
+namespace Rebellion.Gameplay
 {
     /// <summary>
     /// Bridge between strategic layer and tactical combat.
@@ -15,7 +12,7 @@ namespace Rebellion.Tactical.Integration
     public sealed class TacticalBattleBridge
     {
         /// <summary>
-        /// Creates a tactical battle config from strategic fleets.
+        /// Creates a tactical battle config from strategic capital ships.
         /// </summary>
         public TacticalBattleConfig CreateBattleConfig(
             IReadOnlyList<CapitalShip> attackerShips,
