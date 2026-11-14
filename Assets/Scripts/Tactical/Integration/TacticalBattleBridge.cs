@@ -1,7 +1,10 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using Rebellion.Game;
 using Rebellion.Game.Units;
 using Rebellion.Tactical.Data;
+using Rebellion.Tactical.Simulation;
 
 namespace Rebellion.Tactical.Integration
 {
@@ -15,30 +18,24 @@ namespace Rebellion.Tactical.Integration
         /// Creates a tactical battle config from strategic fleets.
         /// </summary>
         public TacticalBattleConfig CreateBattleConfig(
-            Fleet attackerFleet,
-            Fleet defenderFleet,
-            string planetName)
+            IReadOnlyList<CapitalShip> attackerShips,
+            IReadOnlyList<CapitalShip> defenderShips,
+            string planetName,
+            int randomSeed)
         {
-            var attackerShips = new List<TacticalShipConfig>();
-            var defenderShips = new List<TacticalShipConfig>();
+            var attackerConfigs = attackerShips
+                .Select(ship => ConvertCapitalShip(ship))
+                .ToList();
 
-            // Convert attacker fleet ships
-            foreach (var ship in attackerFleet.GetChildren<CapitalShip>())
-            {
-                attackerShips.Add(ConvertCapitalShip(ship));
-            }
-
-            // Convert defender fleet ships
-            foreach (var ship in defenderFleet.GetChildren<CapitalShip>())
-            {
-                defenderShips.Add(ConvertCapitalShip(ship));
-            }
+            var defenderConfigs = defenderShips
+                .Select(ship => ConvertCapitalShip(ship))
+                .ToList();
 
             return new TacticalBattleConfig(
-                attackerShips,
-                defenderShips,
+                attackerConfigs,
+                defenderConfigs,
                 planetName,
-                0, // Random seed will be set by caller
+                randomSeed,
                 5000f,
                 2000f);
         }
@@ -57,6 +54,8 @@ namespace Rebellion.Tactical.Integration
                 {
                     int power = GetWeaponPower(weaponEntry.Value);
                     int range = GetWeaponRange(weaponEntry.Value);
+
+                    if (power <= 0) continue;
 
                     switch (weaponEntry.Key)
                     {
@@ -127,16 +126,53 @@ namespace Rebellion.Tactical.Integration
         }
 
         /// <summary>
-        /// Applies tactical battle results back to the strategic layer.
+        /// Runs a headless tactical battle simulation.
         /// </summary>
-        public void ApplyResult(GameRoot game, TacticalBattleResult result)
+        public TacticalBattleResult RunHeadlessBattle(TacticalBattleConfig config)
         {
-            // TODO: Implement result application to strategic layer
-            // This will need to:
-            // 1. Find destroyed ships and remove them from fleets
-            // 2. Apply hull damage to surviving ships
-            // 3. Record squadron losses
-            // 4. Handle withdrawals
+            var simulation = new TacticalBattleSimulation(config);
+            var targetingSystem = new TacticalTargetingSystem();
+            var damageSystem = new TacticalDamageSystem(simulation.Random);
+            var weaponSystem = new TacticalWeaponSystem(targetingSystem, damageSystem);
+            var repairSystem = new TacticalRepairSystem();
+            var aiController = new TacticalAIController(targetingSystem, weaponSystem);
+
+            const float deltaTime = 1f / 60f;
+            const int maxTicks = 6000; // Max 100 seconds of simulation
+
+            for (int tick = 0; tick < maxTicks && !simulation.IsBattleOver; tick++)
+            {
+                simulation.Update(deltaTime);
+
+                // AI controls all ships in headless mode
+                foreach (var ship in simulation.AllShips)
+                {
+                    if (ship.IsDestroyed) continue;
+
+                    var enemies = ship.Side == TacticalShipSide.Attacker
+                        ? simulation.DefenderShips
+                        : simulation.AttackerShips;
+
+                    aiController.Update(ship, enemies, deltaTime);
+                    weaponSystem.UpdateCooldowns(ship, deltaTime);
+
+                    var shots = weaponSystem.TryFireWeapons(ship, enemies, deltaTime);
+                    foreach (var shot in shots)
+                    {
+                        if (!shot.IsProjectile)
+                            damageSystem.ApplyDamage(shot.Target, shot.Damage);
+                    }
+                }
+
+                // Repair
+                foreach (var ship in simulation.AllShips)
+                {
+                    if (!ship.IsDestroyed)
+                        repairSystem.Update(ship, deltaTime);
+                }
+            }
+
+            return simulation.FinalizeResult();
         }
 
         private static int GetWeaponPower(int[] weaponValues)
