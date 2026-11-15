@@ -15,7 +15,7 @@ namespace Rebellion.Tactical.AI
 
         public TacticalAIController(TacticalTargetingSystem targetingSystem, TacticalWeaponSystem weaponSystem)
         {
-            _targetingSystem = targetingingSystem;
+            _targetingSystem = targetingSystem;
             _weaponSystem = weaponSystem;
         }
 

@@ -3,7 +3,6 @@ using UnityEngine;
 using Rebellion.Tactical.Data;
 using Rebellion.Tactical.Simulation;
 using Rebellion.Tactical.AI;
-using Rebellion.Tactical.UI;
 
 namespace Rebellion.Tactical.Presentation
 {
@@ -33,6 +32,7 @@ namespace Rebellion.Tactical.Presentation
         private TacticalAIController _aiController;
 
         private List<TacticalProjectile> _projectiles = new List<TacticalProjectile>();
+        private TacticalBattleSceneBuilder _sceneBuilder;
 
         /// <summary>Current battle state.</summary>
         public TacticalBattleStateEnum State => _state;
@@ -42,6 +42,14 @@ namespace Rebellion.Tactical.Presentation
 
         /// <summary>Speed controller.</summary>
         public TacticalSpeedController SpeedController => _speedController;
+
+        /// <summary>Event raised when the battle completes.</summary>
+        public event System.Action<TacticalBattleResult> BattleComplete;
+
+        private void Start()
+        {
+            _sceneBuilder = GetComponent<TacticalBattleSceneBuilder>();
+        }
 
         /// <summary>
         /// Starts a tactical battle with the given config.
@@ -71,7 +79,9 @@ namespace Rebellion.Tactical.Presentation
                 return null;
 
             _state = TacticalBattleStateEnum.Complete;
-            return _simulation.FinalizeResult();
+            var result = _simulation.FinalizeResult();
+            BattleComplete?.Invoke(result);
+            return result;
         }
 
         /// <summary>
@@ -100,7 +110,7 @@ namespace Rebellion.Tactical.Presentation
 
             float deltaTime = Time.deltaTime * _speedController.TimeScale;
 
-            // Update simulation
+            // Update simulation movement
             _simulation.Update(deltaTime);
 
             // Update AI ships (defenders)
@@ -143,6 +153,12 @@ namespace Rebellion.Tactical.Presentation
             {
                 if (!ship.IsDestroyed)
                     _repairSystem.Update(ship, deltaTime);
+            }
+
+            // Update ship renderers
+            if (_sceneBuilder != null)
+            {
+                _sceneBuilder.UpdateShipRenderers();
             }
 
             // Check battle end

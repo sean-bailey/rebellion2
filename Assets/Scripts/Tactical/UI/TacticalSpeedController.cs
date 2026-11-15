@@ -1,3 +1,5 @@
+using Rebellion.Tactical.Data;
+
 namespace Rebellion.Tactical.UI
 {
     /// <summary>
