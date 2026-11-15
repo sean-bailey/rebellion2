@@ -3,6 +3,7 @@ using UnityEngine;
 using Rebellion.Tactical.Data;
 using Rebellion.Tactical.Simulation;
 using Rebellion.Tactical.AI;
+using Rebellion.Tactical.UI;
 
 namespace Rebellion.Tactical.Presentation
 {
